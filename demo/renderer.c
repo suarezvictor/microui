@@ -127,20 +127,40 @@ void r_draw_rect(mu_Rect rect, mu_Color color) {
   push_quad(rect, atlas[ATLAS_WHITE], color);
 }
 
+void r_set_clip_rect(mu_Rect rect) {
+  flush();
+  glScissor(rect.x, height - (rect.y + rect.h), rect.w, rect.h);
+}
+
+void r_clear(mu_Color clr) {
+  flush();
+  glClearColor(clr.r / 255., clr.g / 255., clr.b / 255., clr.a / 255.);
+  glClear(GL_COLOR_BUFFER_BIT);
+}
+
+void r_present(void) {
+  flush();
+  SDL_GL_SwapWindow(window);
+}
+
+//-----------------------------------------------------------------------------------------------
+// Portable functions
+//-----------------------------------------------------------------------------------------------
+static int r_draw_char(char chr, mu_Vec2 pos, mu_Color color) {
+  mu_Rect src = atlas[ATLAS_FONT + chr];
+  mu_Rect dst = { pos.x, pos.y, src.w, src.h };
+  push_quad(dst, src, color);
+  return src.w;
+}
+
 
 void r_draw_text(const char *text, mu_Vec2 pos, mu_Color color) {
-  mu_Rect dst = { pos.x, pos.y, 0, 0 };
   for (const char *p = text; *p; p++) {
     if ((*p & 0xc0) == 0x80) { continue; }
     int chr = mu_min((unsigned char) *p, 127);
-    mu_Rect src = atlas[ATLAS_FONT + chr];
-    dst.w = src.w;
-    dst.h = src.h;
-    push_quad(dst, src, color);
-    dst.x += dst.w;
+    pos.x += r_draw_char(chr, pos, color);
   }
 }
-
 
 void r_draw_icon(int id, mu_Rect rect, mu_Color color) {
   mu_Rect src = atlas[id];
@@ -166,20 +186,3 @@ int r_get_text_height(void) {
 }
 
 
-void r_set_clip_rect(mu_Rect rect) {
-  flush();
-  glScissor(rect.x, height - (rect.y + rect.h), rect.w, rect.h);
-}
-
-
-void r_clear(mu_Color clr) {
-  flush();
-  glClearColor(clr.r / 255., clr.g / 255., clr.b / 255., clr.a / 255.);
-  glClear(GL_COLOR_BUFFER_BIT);
-}
-
-
-void r_present(void) {
-  flush();
-  SDL_GL_SwapWindow(window);
-}
