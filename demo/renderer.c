@@ -2,7 +2,8 @@
 #include "renderer.h"
 #include "atlas.inl"
 
-#include "renderer_sdl.c"
+//#include "renderer_sdl.c"
+#include "renderer_sw.c"
 
 //-----------------------------------------------------------------------------------------------
 // Portable functions

@@ -1,6 +1,6 @@
 CFLAGS=-Wall -std=c11 -pedantic -O3 -g
 LIBS=-lGL `sdl2-config --libs` -lm
-INC=-I../src 
+INC=-I../src -I../../CflexHDL/include
 
 all: microui
 	./microui
