@@ -5,7 +5,7 @@ INC=-I../src
 all: microui
 	./microui
 
-microui:
+microui: main.c renderer.c renderer.h ../src/microui.c ../src/microui.h
 	gcc $(INC) $(CFLAGS) main.c renderer.c ../src/microui.c $(LIBS) -o microui
 
 clean:
