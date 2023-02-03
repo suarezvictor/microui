@@ -1,4 +1,4 @@
-#include <SDL2/SDL.h>
+#include <SDL2/SDL.h> //input functions
 #include <stdio.h>
 #include "renderer.h"
 #include "microui.h"
@@ -231,11 +231,14 @@ static int text_height(mu_Font font) {
   return r_get_text_height();
 }
 
+#ifndef FB_WIDTH
+#define FB_WIDTH 800
+#define FB_HEIGHT 600
+#endif
 
 int main(int argc, char **argv) {
-  /* init SDL and renderer */
-  SDL_Init(SDL_INIT_EVERYTHING);
-  r_init();
+  /* init renderer */
+  r_init(FB_WIDTH, FB_HEIGHT);
 
   /* init microui */
   mu_Context *ctx = malloc(sizeof(mu_Context));
