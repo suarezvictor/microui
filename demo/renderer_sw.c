@@ -11,7 +11,7 @@ static fb_handle_t fb;
 
 static inline uint32_t color2rgba(mu_Color color)
 {
-  return color.r | (color.g << 8) | (color.b << 16) | (color.a << 24);
+  return color.b | (color.g << 8) | (color.r << 16) | (color.a << 24);
 }
 
 static void
@@ -48,14 +48,14 @@ inline uint8_t alpha_mul(uint8_t a, uint8_t c) { return a*c >> 8; }
 inline uint32_t blend(uint32_t bg, uint32_t fg, uint8_t alpha)
 {
   alpha = alpha_mul(alpha, fg >> 24);
-  uint8_t r = alpha_mul(alpha, fg >> 0);
+  uint8_t r = alpha_mul(alpha, fg >> 16);
   uint8_t g = alpha_mul(alpha, fg >> 8);
-  uint8_t b = alpha_mul(alpha, fg >> 16);
+  uint8_t b = alpha_mul(alpha, fg >> 0);
   alpha = 255 - alpha;
-  r += alpha_mul(alpha, bg >> 0);
+  r += alpha_mul(alpha, bg >> 16);
   g += alpha_mul(alpha, bg >> 8);
-  b += alpha_mul(alpha, bg >> 16);
-  return r | (g << 8) | (b << 16);
+  b += alpha_mul(alpha, bg >> 0);
+  return b | (g << 8) | (r << 16);
 }
 
 int r_internal_blit_alpha8(int x0, int y0, int x1, int y1, uint32_t col,
