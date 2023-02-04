@@ -16,7 +16,7 @@ static inline uint32_t color2rgba(mu_Color color)
 
 inline uint8_t alpha_mul(uint8_t a, uint8_t c) { return a*c >> 8; }
 
-static inline uint32_t rgba_premul(uint32_t color, uint8_t alpha)
+static inline uint32_t alpha_mul(uint32_t color, uint8_t alpha)
 {
   return alpha_mul(color >> 0, alpha)
     | (alpha_mul(color >> 8, alpha) << 8)
@@ -54,14 +54,7 @@ r_internal_fill_rect(unsigned char *pixels,
 
 inline uint32_t blend_premul(uint32_t bg, uint32_t fg_premul)
 {
-  uint8_t r = fg_premul >> 16;
-  uint8_t g = fg_premul >> 8;
-  uint8_t b = fg_premul >> 0;
-  uint8_t alpha_i = 255 - (fg_premul >> 24);
-  r += alpha_mul(alpha_i, bg >> 16);
-  g += alpha_mul(alpha_i, bg >> 8);
-  b += alpha_mul(alpha_i, bg >> 0);
-  return b | (g << 8) | (r << 16);
+  return fg_premul + alpha_mul(bg, 255 - (fg_premul >> 24)); //will result in alpha 255
 }
 
 int r_internal_fill_rect_alpha(uint8_t *target_pixels, int x0, int y0, int x1, int y1, uint32_t col)
@@ -92,8 +85,8 @@ int r_internal_blit_alpha8(int x0, int y0, int x1, int y1, uint32_t col,
 	for (int x = x0; x < x1; ++x)
 	{
 	    uint8_t alpha = *texel++;
-	    uint32_t src_col = rgba_premul(col, alpha);
-	    src_col = (src_col & 0xFFFFFF) | (alpha_mul(col >> 24, alpha) << 24);
+	    uint32_t src_col = alpha_mul(col, alpha);
+	    src_col = (src_col & 0xFFFFFF) | (alpha_mul(col >> 24, alpha) << 24); //set alpha as product
         *target_pixel++ = blend_premul(*target_pixel, src_col);
 	}
 	texture_pixels += src_width;
@@ -130,7 +123,7 @@ static void push_quad(mu_Rect dst, mu_Rect src, mu_Color color) {
   int x1 = MAX(scissors_x0, MIN(scissors_x1, dst.x+dst.w));
   int y1 = MAX(scissors_y0, MIN(scissors_y1, dst.y+dst.h));
 
-  uint32_t c = rgba_premul(color2rgba(color), color.a);
+  uint32_t c = alpha_mul(color2rgba(color), color.a);
   if(src.w == 0 || src.h == 0)
   {
     if((c >> 24) == 255)
@@ -157,7 +150,7 @@ void r_set_clip_rect(mu_Rect rect) {
 
 void r_clear(mu_Color color) {
   flush();
-  r_internal_fill_rect((unsigned char*) pixbuf, 0, 0, w_width, w_height, rgba_premul(color2rgba(color), 255));
+  r_internal_fill_rect((unsigned char*) pixbuf, 0, 0, w_width, w_height, alpha_mul(color2rgba(color), 255));
 }
 
 void r_present(void) {
