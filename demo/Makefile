@@ -1,4 +1,4 @@
-CFLAGS=-Wall -std=c11 -pedantic -O3 -g
+CFLAGS=-Wall -std=c11 -pedantic -O3 -g -DRENDERER_SOFTWARE
 LIBS=-lGL `sdl2-config --libs` -lm
 INC=-I../src -I../../CflexHDL/include
 

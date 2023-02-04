@@ -14,13 +14,13 @@ static inline uint32_t color2rgba(mu_Color color)
   return color.b | (color.g << 8) | (color.r << 16) | (color.a << 24);
 }
 
-inline uint8_t alpha_mul(uint8_t a, uint8_t c) { return a*c >> 8; }
+inline uint8_t alpha_mul8(uint8_t a, uint8_t c) { return a*c >> 8; }
 
 static inline uint32_t alpha_mul(uint32_t color, uint8_t alpha)
 {
-  return alpha_mul(color >> 0, alpha)
-    | (alpha_mul(color >> 8, alpha) << 8)
-    | (alpha_mul(color >> 16, alpha) << 16)
+  return alpha_mul8(color >> 0, alpha)
+    | (alpha_mul8(color >> 8, alpha) << 8)
+    | (alpha_mul8(color >> 16, alpha) << 16)
     | (alpha << 24);
 }
 
@@ -150,7 +150,8 @@ void r_set_clip_rect(mu_Rect rect) {
 
 void r_clear(mu_Color color) {
   flush();
-  r_internal_fill_rect((unsigned char*) pixbuf, 0, 0, w_width, w_height, alpha_mul(color2rgba(color), 255));
+  color.a = 255;
+  r_internal_fill_rect((unsigned char*) pixbuf, 0, 0, w_width, w_height, color2rgba(color));
 }
 
 void r_present(void) {
