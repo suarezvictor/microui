@@ -19,8 +19,6 @@ r_internal_fill_rect(unsigned char *pixels,
     const short x0, const short y0, const short x1, const short y1,
     const unsigned int col)
 {
-    // WARNING: no checking
-
     unsigned int i, n;
     unsigned int c[16];
     unsigned int *ptr;
@@ -45,9 +43,9 @@ r_internal_fill_rect(unsigned char *pixels,
 
 inline uint8_t alpha_mul(uint8_t a, uint8_t c) { return a*c >> 8; }
 
-inline uint32_t blend(uint32_t bg, uint32_t fg, uint8_t alpha)
+inline uint32_t blend(uint32_t bg, uint32_t fg)
 {
-  alpha = alpha_mul(alpha, fg >> 24);
+  uint8_t alpha = fg >> 24;
   uint8_t r = alpha_mul(alpha, fg >> 16);
   uint8_t g = alpha_mul(alpha, fg >> 8);
   uint8_t b = alpha_mul(alpha, fg >> 0);
@@ -58,20 +56,37 @@ inline uint32_t blend(uint32_t bg, uint32_t fg, uint8_t alpha)
   return b | (g << 8) | (r << 16);
 }
 
+int r_internal_fill_rect_alpha(uint8_t *target_pixels, int x0, int y0, int x1, int y1, uint32_t col)
+{
+  target_pixels += y0 * FB_PITCH + x0 * sizeof(col);
+  for (int y = y0; y < y1; ++y)
+  {
+    uint32_t *target_pixel = (uint32_t *) target_pixels;	
+	for (int x = x0; x < x1; ++x)
+	{
+        *target_pixel++ = blend(*target_pixel, col);
+	}
+	target_pixels += FB_PITCH;
+  }
+  return 1;
+}
+
 int r_internal_blit_alpha8(int x0, int y0, int x1, int y1, uint32_t col,
   int src_x, int src_y, const uint8_t *src_pixels, unsigned src_width)
 {
   const uint8_t *texture_pixels = &src_pixels[src_y * src_width + src_x];
   uint8_t *target_pixels = (unsigned char *) pixbuf;
   target_pixels += y0 * FB_PITCH + x0 * sizeof(col);
+  uint8_t col_alpha = col >> 24;
   for (int y = y0; y < y1; ++y)
   {
     const uint8_t *texel = texture_pixels;
     uint32_t *target_pixel = (uint32_t *) target_pixels;	
 	for (int x = x0; x < x1; ++x)
 	{
-		uint8_t src_alpha = *texel++;
-        *target_pixel++ = blend(*target_pixel, col, src_alpha);
+		uint8_t src_alpha = alpha_mul(*texel++, col_alpha);
+		col = (col & 0xFFFFFF) | (src_alpha<<24);
+        *target_pixel++ = blend(*target_pixel, col);
 	}
 	texture_pixels += src_width;
 	target_pixels += FB_PITCH;
@@ -109,7 +124,12 @@ static void push_quad(mu_Rect dst, mu_Rect src, mu_Color color) {
 
   uint32_t c = color2rgba(color);
   if(src.w == 0 || src.h == 0)
-    r_internal_fill_rect((unsigned char*) pixbuf, x0, y0, x1, y1, c);
+  {
+    if((c >> 24) == 255)
+      r_internal_fill_rect((unsigned char*) pixbuf, x0, y0, x1, y1, c);
+    else
+      r_internal_fill_rect_alpha((unsigned char*) pixbuf, x0, y0, x1, y1, c);
+  }
   else
     r_internal_blit_alpha8(x0, y0, x1, y1, c, src.x, src.y, atlas_texture, ATLAS_WIDTH);
 }
